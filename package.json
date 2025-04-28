@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "tailwindcss": "^3.4.15"
+  },
+  "dependencies": {
+    "@apollo/datasource-rest": "^6.4.1"
   }
 }

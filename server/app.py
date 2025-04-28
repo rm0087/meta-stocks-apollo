@@ -87,6 +87,16 @@ def remove_binary_content(text):
     
     return cleaned_text
 
+
+@app.route('/balance_sheets', methods = ['GET'])
+def get_all_balance_sheets():
+    try:
+        sheets = BalanceSheet.query.all()
+        return [bs.to_dict() for bs in sheets], 200
+    except Exception as e:
+        return {'error': str(e)}, 404
+
+
 @app.route('/companies', methods=['GET'])
 def get_all_companies():
     try:
