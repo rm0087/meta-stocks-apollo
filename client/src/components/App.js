@@ -16,65 +16,122 @@ const GET_COMPANY = gql`
         }
     }
 `
+const GET_FILINGS = gql`
+    query GetCompanyFilings($cik_10: String!) {
+        getCompanyFilings(cik_10: $cik_10) {
+            fin {
+                accn
+                doc
+                filingDate
+                form
+                fullFilingUrl
+                reportDate
+                txt
+                urlPrefix
+            }
+            insiders {
+                accn
+                doc
+                filingDate
+                form
+                fullFilingUrl
+                reportDate
+                txt
+                urlPrefix
+            }
+            institutions {
+                accn
+                doc
+                filingDate
+                form
+                fullFilingUrl
+                reportDate
+                txt
+                urlPrefix
+            }
+            latest {
+                accn
+                doc
+                filingDate
+                form
+                fullFilingUrl
+                reportDate
+                txt
+                urlPrefix
+            }
+        }
+    }
+`
+const GET_SUGGESTIONS = gql`
+    query GetSuggestions($query: String!) {
+        getSuggestions(query: $query) {
+            name
+            ticker
+        }
+    }
 
+`
 export default function App() {
-    const [queryTicker, setQueryTicker] = useState("");
+    const [company, setCompany] = useState('');
+    const [query, setQuery] = useState('');  // The current value of the search input
+    const [suggestions, setSuggestions] = useState([]);  // The list of company suggestions
+    const [price, setPrice] = useState(0);
+    const [shares, setShares] = useState(0);
+    const [filings, setFilings] = useState({});
+    const serverUrl = "https://meta-stocks-demo.onrender.com";
     
-    const [getCompany, { loading: coLoading, error: coError, data: coData }] = useLazyQuery(GET_COMPANY);
+    const [getCompany, { loading: coLoading, error: coError, data: coData }] = useLazyQuery(GET_COMPANY, {
+        onCompleted: (data) => {
+            if (data && data.getCompany){
+                setCompany(data.getCompany)
+            }
+        }
+    });
+    
+    const [getCompanyFilings, { loading: filLoading, error: filError, data: filData }] = useLazyQuery(GET_FILINGS, {
+        onCompleted: (data) => {
+            if (data && data.getCompanyFilings) {
+                setFilings(data.getCompanyFilings);
+            }
+        },
+        onError: (error) => {
+            console.error("Filings query error:", error);
+        }
+    });
+
+    const [getSuggestions, { loading: sugLoading, error: sugError, data: sugData}] = useLazyQuery(GET_SUGGESTIONS,{
+        onCompleted: (data) => {
+            if (data && data.getSuggestions) {
+                setSuggestions(data.getSuggestions)
+            }
+        }
+    });
 
     useEffect(()=>{
-        if (coData) {
-            setCompany(coData.getCompany)
+        if (coData && coData.getCompany) {
+            // setCompany(coData.getCompany)
             setQuery("")
             setSuggestions("") 
         }
     },[coData])
 
-    const[company, setCompany] = useState('');
-    const [query, setQuery] = useState('');  // The current value of the search input
-    const [suggestions, setSuggestions] = useState([]);  // The list of company suggestions
-    const [loading, setLoading] = useState(false);  // Loading state for making requests
-    const [price, setPrice] = useState(0);
-    const [shares, setShares] = useState(0);
-    const [filings, setFilings] = useState({});
-    const serverUrl = "https://meta-stocks-demo.onrender.com";
-   
-    // Function to handle input changes
-    const handleInputChange = (event) => {
-        const searchQuery = event.target.value;
-        setQuery(searchQuery);
-
-        // If the query is empty, clear suggestions
-        if (searchQuery.trim().length === 0) {
-        setSuggestions([]);
-        return;
+    useEffect(() => {
+        if (company && company.cik_10) {
+          console.log("Fetching filings for cik_10:", company.cik_10);
+          getCompanyFilings({ 
+            variables: { cik_10: company.cik_10 }
+          });
         }
+      }, [company, company.cik_10, getCompanyFilings]);
 
-        // Fetch matching companies if the query is non-empty
-        fetchSuggestions(searchQuery);
-    };
-
-    // Function to fetch suggestions from the backend
-    const fetchSuggestions = async (searchQuery) => {
-        setLoading(true);
-        try {
-            const response = await fetch(`api/companies/search?query=${searchQuery}`);
-        
-        // Check if the response is ok (status code 200)
-            if (response.ok) {
-                const data = await response.json();
-                setSuggestions(data);  // Update the suggestions with the response data
-            } else {
-                setSuggestions([]);  // If response is not OK, clear suggestions
-            }
-        } catch (error) {
-            console.error("Error fetching companies", error);
-            setSuggestions([]);  // Clear suggestions in case of error
-        } finally {
-            setLoading(false);
+    useEffect(()=>{
+        if (query) {
+            getSuggestions({
+                variables: { query: query}
+            })
         }
-    };
-    
+    },[query])
+
     useEffect(()=>{
         if (company) {
             const fetchPrice = async () => {
@@ -94,62 +151,29 @@ export default function App() {
                 }
             };
 
-            const fetchShares = async () => {
-                setQuery('');
-                setSuggestions([])
-                if (company){
-                    try {
-                        const response = await fetch(`shares/${company.id}`, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error('Failed to find shares');
-                        }
-                
-                        const data = await response.json();
-                        setShares(data[0]?.historical_shares);
-                    
-                    } catch (error) {
-                        console.error('Error searching shares:', error);
-                    }
-                }
-            };
-            const fetchFilings = async () => {
-                setFilings([])
-                try{
-                    const response = await fetch (`filings/${company.cik_10}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                    });
-                    if (!response.ok) {
-                        throw new Error('Failed to retrieve filings');
-                    }
-                    const data = await response.json()
-                    if (data == {}) {
-                        setFilings(["No filings to show."])
-                    }
-                    setFilings(data)
-                } catch (error) {
-                    setFilings({})
-                    console.error('Error retrieving filings', error)
-                }
-            }
-
             document.title = `${company.ticker} - MetaStocks`
 
             fetchPrice()
-            // fetchShares()
-            fetchFilings()
         }
     },[company])
+
+    const handleSumbit = (e) => {
+        e.preventDefault(); 
+        getCompany({ variables: { ticker: query}});
+        setQuery("")
+        setSuggestions("")
+    }
+
+    const handleInputChange = (event) => {
+        const searchQuery = event.target.value;
+        setQuery(searchQuery);
+
+        // If the query is empty, clear suggestions
+        if (searchQuery.trim().length === 0) {
+            setSuggestions([]);
+            return;
+        };
+    };
     
     const formatTimestamp = (timestamp) => {
         const date = new Date(timestamp);
@@ -167,14 +191,14 @@ export default function App() {
         // Format as MM/DD/YYYY @HH:mm:ss
         return `${month}/${day}/${year}`;
       };
-       
+    
     return(
         <>
-            <form id='company-search-form' className="shadow-md px-10 bg-gray-500" onSubmit={(e)=> {e.preventDefault(); getCompany({ variables: { ticker: e.target.value}})}}>
+            <form id='company-search-form' className="shadow-md px-10 bg-gray-500" onSubmit={(e)=> {handleSumbit(e)}}>
                 <input id='company-input' className="border rounded m-1 font-mono tracking-tighter px-2 bg-gray-200" type='text' value={query} onChange={handleInputChange} placeholder="Company or Ticker" autoComplete="off"/>
             
                 {suggestions.length > 0 && (
-                    <ul className="absolute bg-white border border-gray-300 rounded mt-1 z-10 inline-block shadow-lg max-h-100 overflow-y-auto">
+                    <ul className="absolute bg-white border border-gray-300 rounded mt-1 ml-16 z-10 inline-block shadow-lg max-h-100 overflow-y-auto">
                     {suggestions.map((company) => (
                         <li key={company.id} className="p-1 hover:bg-gray-200 cursor-pointer whitespace-nowrap font-mono text-base" value onClick={() => getCompany({ variables: { ticker: company.ticker}})}>{company.name} - ({company.ticker}) </li>
                     ))}

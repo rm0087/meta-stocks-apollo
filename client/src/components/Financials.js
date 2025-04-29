@@ -63,10 +63,9 @@ export default function Financials({company, shares, price}){
         return shares * price
     };
     
-    function formatNumber(num, digits=3) {
-        if (typeof num === undefined || isNaN(num)) {
-            return 0;
-        }
+    function formatNumber(num2, digits=3) {
+        const num = parseInt(num2)
+        
         if (Math.abs(num) >= 1000000000000) {
             return (num / 1000000000000).toFixed(digits) + ' T';
         } else if (Math.abs(num) >= 1000000000) {

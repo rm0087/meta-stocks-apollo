@@ -3,6 +3,8 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import BalanceSheetsAPI from './balance-sheet-api.js'
 import IncomeStatementsAPI from './income-statement-api.js';
 import CompaniesAPI from './companies-api.js';
+import FilingsAPI from './filings-api.js';
+import SuggestionsAPI from './suggestions-api.js';
 
 
 const typeDefs = `
@@ -32,40 +34,62 @@ const typeDefs = `
         cik_10: String
     }
 
+    type Filing {
+        form: String
+        accn: String
+        filingDate: String
+        reportDate: String
+        fullFilingUrl: String
+        doc: String
+        urlPrefix: String
+        txt: String
+    }
+
+    type Filings {
+        fin: [Filing]
+        insiders: [Filing]
+        institutions: [Filing]
+        latest: [Filing]
+    }
+
     type Query {
         balanceSheets: [BalanceSheet]
         companyBalanceSheets(cik: Int!): [BalanceSheet]
         companyIncomeStatements(cik: Int!): [IncomeStatement]
         getCompany(ticker: String!): Company
+        getCompanyFilings(cik_10: String!): Filings
+        getSuggestions(query: String!): [Company]
     }
 `
-
-const resolvers = {
-    Query: {
-        getCompany: async (_, {ticker}, {dataSources }) => {
-            return dataSources.companiesAPI.getCompany(ticker)
-        },
-        balanceSheets: async (_, __, {dataSources}) => {
-            return dataSources.balanceSheetAPI.getBalanceSheets();
-        },
-        companyBalanceSheets: async (_, {cik}, {dataSources}) => {
-            console.log(cik)
-            console.log(dataSources.balanceSheetAPI.companyBalanceSheets(cik));
-            return dataSources.balanceSheetAPI.companyBalanceSheets(cik);
-        },
-        companyIncomeStatements: async (_, {cik}, {dataSources}) => {
-            return dataSources.incomeStatementAPI.companyIncomeStatements(cik);
-        },
-
-    }
-}
 
 interface ContextValue {
     dataSources: {
         balanceSheetAPI: BalanceSheetsAPI,
         incomeStatementAPI: IncomeStatementsAPI,
         companiesAPI: CompaniesAPI,
+        filingsAPI: FilingsAPI,
+        suggestionsAPI: SuggestionsAPI,
     };
+}
+
+const resolvers = {
+    Query: {
+        getCompany: async (_, {ticker}, {dataSources }) => {
+            return dataSources.companiesAPI.getCompany(ticker)
+        },
+        companyBalanceSheets: async (_, {cik}, {dataSources}) => {
+            return dataSources.balanceSheetAPI.companyBalanceSheets(cik);
+        },
+        companyIncomeStatements: async (_, {cik}, {dataSources}) => {
+            return dataSources.incomeStatementAPI.companyIncomeStatements(cik);
+        },
+        getCompanyFilings: async (_, {cik_10}, {dataSources}) => {
+            return dataSources.filingsAPI.getCompanyFilings(cik_10);
+        },
+        getSuggestions: async (_, { query }, { dataSources }) => {
+            return dataSources.suggestionsAPI.getSuggestions(query);
+        },
+    }
 }
 
 const server = new ApolloServer<ContextValue>({
@@ -81,6 +105,8 @@ const { url } = await startStandaloneServer(server, {
           balanceSheetAPI: new BalanceSheetsAPI({ cache }),
           incomeStatementAPI: new IncomeStatementsAPI({ cache }),
           companiesAPI: new CompaniesAPI({ cache }),
+          filingsAPI: new FilingsAPI({ cache }),
+          suggestionsAPI: new SuggestionsAPI({ cache })
         },
       };
     },
