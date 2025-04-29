@@ -2,79 +2,69 @@ import React, { useEffect, useState } from "react";
 import { Bar, Line } from 'react-chartjs-2';
 // import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement } from 'chart.js';
 import 'chart.js/auto'
+import { useQuery, gql } from "@apollo/client";
 
+const GET_BALANCE_SHEETS = gql`
+    query balanceSheets($cik: Int!) {
+        companyBalanceSheets(cik: $cik) {
+            company_cik
+            total_assets
+            total_liabilities
+            total_stockholders_equity
+            end
+            cash_and_equiv
+            currency
+        }
+    }
+`
+
+const GET_INCOME_STATEMENTS = gql`
+    query incomeStatements($cik: Int!) {
+        companyIncomeStatements(cik: $cik) {
+            company_cik
+            net_income
+            total_revenue
+            operating_income
+            end
+            currency
+        }
+    }
+`
 
 export default function Financials({company, shares, price}){
-    const[api, setApi] = useState([]);
-    const[incApi, setIncApi] = useState([]);
-    const[cfApi, setCfApi] = useState([]);
-    const[assetsData, setAssetsData] = useState([]);
-    const[liabilitiesData, setLiabilitiesData] = useState([]);
-    const[stockholdersData, setStockholdersData] = useState([]);
-    const[cashData, setCashData] = useState([]);
-    const[goodwillData, setGoodwillData] = useState([]);
-    const[netIncomeData, setNetIncomeData] = useState([]);
-    const[revenueData, setRevenueData] = useState([]);
-    const[opIncData, setOpIncData] = useState([]);
-    const[assetsLabels, setAssetsLabels] = useState([]);
-    const[netIncomeLabels, setNetIncomeLabels] = useState([]);
+    const {loading: bsLoading, error: bsError, data: bsData} = useQuery(GET_BALANCE_SHEETS, {
+        variables: { cik: company.cik },
+    });
 
-    const[company2, setCompany2] = useState({});
-    const[company2IncApi, setCompany2IncApi] = useState ([]);
-    const[company2BsApi, setCompany2BsApi] = useState ([]);
+    const { loading: incLoading, error: incError, data: incData} = useQuery(GET_INCOME_STATEMENTS, {
+        variables: { cik: company.cik }
+    });
 
-    const fetchStatements = async () => {
-        try {
-            const response = await fetch(`/balance_sheets/${company.cik}`);
-            const response2 = await fetch(`/income_statements/${company.cik}`);
-            // const response3 = await fetch(`/cf_statements/${company.cik}`);
-            if (response.ok) {
-                const data = await response.json();
-                const data2 = await response2.json();
-                // const data3 = await response3.json();
-                setApi(data);
-                setIncApi(data2);
-            } else {
-                setApi([]);
-                setIncApi([]);
-                // setCfApi([]);
-                console.error('Failed to fetch financial statements:', response.status);
-            }
-        } catch (error) {
-            console.error('Error fetching financial statements:', error);
-        }
-    };
+    const bsDefaults = {
+        assetsData: "", 
+        liabilitiesData: "",
+        stockholdersData: "",
+        cashData: "",
+        assetsLabels: "",
+    }
 
-    const fetchStatements2 = async () => {
-        try {
-            const response = await fetch(`/balance_sheets/${company.cik}`);
-            const response2 = await fetch(`/income_statements/${company.cik}`);
-            // const response3 = await fetch(`/cf_statements/${company.cik}`);
-            if (response.ok) {
-                const data = await response.json();
-                const data2 = await response2.json();
-                // const data3 = await response3.json();
-                setCompany2BsApi(data);
-                setCompany2IncApi(data2);
-            } else {
-                setCompany2BsApi([]);
-                setCompany2IncApi([]);
-                // setCfApi([]);
-                console.error('Failed to fetch financial statements:', response.status);
-            }
-        } catch (error) {
-            console.error('Error fetching financial statements:', error);
-        }
-    };
+    const incDefaults = {
+        netIncomeData: "",
+        revenueData: "",
+        opIncData: "",
+        netIncomeLabels: "",
+    }
+
+    const [bsObj, setBsObj] = useState(bsDefaults);
+    const [incObj, setIncObj] = useState(incDefaults);
 
 
     function setMarketCap(shares, price) {
         return shares * price
-    }
-    
+    };
     
     function formatNumber(num, digits=3) {
-        if (typeof num !== 'number' || isNaN(num)) {
+        if (typeof num === undefined || isNaN(num)) {
             return 0;
         }
         if (Math.abs(num) >= 1000000000000) {
@@ -88,45 +78,35 @@ export default function Financials({company, shares, price}){
         } else {
             return num.toFixed(0);
         }
-    }
+    };
 
-    
     useEffect(() =>{
-        if (api.length > 0) {
-            setAssetsLabels(api.map(bs => bs.end));
-            setAssetsData(api.map(bs => bs.total_assets));
-            setLiabilitiesData(api.map(bs => bs.total_liabilities));
-            setStockholdersData(api.map(bs => bs.total_stockholders_equity));
-            setCashData(api.map(bs => bs.cash_and_equiv));
+        if (bsData) {
+            setBsObj({ ...bsObj, 
+                ['assetsLabels']: bsData.companyBalanceSheets.map(bs => bs.end),
+                ['assetsData']: bsData.companyBalanceSheets.map(bs => bs.total_assets),
+                ['liabilitiesData']: bsData.companyBalanceSheets.map(bs => bs.total_liabilities),
+                ['stockholdersData']: bsData.companyBalanceSheets.map(bs => bs.total_stockholders_equity),
+                ['cashData']: bsData.companyBalanceSheets.map(bs => bs.cash_and_equiv),
+            })
+
         } else {
-            setAssetsLabels([]);
-            setAssetsData([]);
-            setLiabilitiesData([]);
-            setStockholdersData([]);
-            setCashData([]);
+            setBsObj(bsDefaults)
         }
         
+        if (incData) {
+            setIncObj({ ... incObj,
+                ['netIncomeLabels']: incData.companyIncomeStatements.map(inc => inc.end),
+                ['netIncomeData']: incData.companyIncomeStatements.map(inc => inc.net_income),
+                ['revenueData']: incData.companyIncomeStatements.map(inc => inc.total_revenue),
+                ['opIncData']: incData.companyIncomeStatements.map(inc => inc.operating_income)
+            })
 
-        if (incApi.length > 0) {
-            setNetIncomeLabels(incApi.map(inc => inc.end));
-            setNetIncomeData(incApi.map(inc => inc.net_income));
-            setRevenueData(incApi.map(inc => inc.total_revenue));
-            setOpIncData(incApi.map(inc => inc.operating_income));
-            // goodwillData = api.map(bs => bs.goodwill);
         } else {
-            setNetIncomeLabels([]);
-            setNetIncomeData([]);
-            setRevenueData([]);
-            setOpIncData([]);
+            setIncObj(incDefaults)
         }
-    },[api])
 
-    
-    useEffect(() =>{
-        if (company){
-            fetchStatements()
-        }
-    },[company])
+    },[bsData, incData])
 
         
 //// 1.) Create data and labels for bar and other charts ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,11 +117,11 @@ export default function Financials({company, shares, price}){
     const incStatementGraphObj = {
         // labels: = An array of dates, 
         // datasets: = An array of objects. Each object defines the settings for each line on the graph.
-        labels: netIncomeLabels,
+        labels: incObj.netIncomeLabels,
         datasets: [
             {
                 label: 'Net Income',
-                data: netIncomeData,
+                data: incObj.netIncomeData,
                 fill: false,
                 borderColor: 'rgb(255, 0, 0)',
                 pointBackgroundColor: 'rgb(255, 0, 0)',
@@ -151,7 +131,7 @@ export default function Financials({company, shares, price}){
             }, 
             {
                 label: 'Revenue',
-                data: revenueData,
+                data: incObj.revenueData,
                 fill: false,
                 borderColor: 'rgb(75, 192, 192)',
                 pointBackgroundColor: 'rgb(75, 192, 192)',
@@ -161,7 +141,7 @@ export default function Financials({company, shares, price}){
             },
             {
                 label: 'Operating Income',
-                data: opIncData,
+                data: incObj.opIncData,
                 fill: false,
                 borderColor: '#ffee00',
                 pointBackgroundColor: '#ffee00',
@@ -173,15 +153,14 @@ export default function Financials({company, shares, price}){
         ]
     };
 
-
     const balanceSheetDataObj = {
         // labels: = An array of dates, 
         // datasets: = An array of objects. Each object defines the settings for each line on the graph.
-        labels: assetsLabels,
+        labels: bsObj.assetsLabels,
         datasets: [
             {
                 label: 'Assets',
-                data: assetsData,
+                data: bsObj.assetsData,
                 fill: false,
                 borderColor: 'rgb(75, 192, 192)',
                 pointBackgroundColor: 'rgb(75, 192, 192)',
@@ -191,7 +170,7 @@ export default function Financials({company, shares, price}){
             },
             {
                 label: 'Liabilities',
-                data: liabilitiesData,
+                data: bsObj.liabilitiesData,
                 fill: false,
                 borderColor: 'rgb(255, 0, 0)',
                 pointBackgroundColor: 'rgb(255, 0, 0)',
@@ -201,7 +180,7 @@ export default function Financials({company, shares, price}){
             },
             {
                 label: `Stockholders' Equity`,
-                data: stockholdersData,
+                data: bsObj.stockholdersData,
                 fill: false,
                 borderColor: 'rgb(0, 0, 0)',
                 pointBackgroundColor: 'rgb(0, 0, 0)',
@@ -211,7 +190,7 @@ export default function Financials({company, shares, price}){
             },
             {
                 label: `Cash and Equivalents`,
-                data: cashData,
+                data: bsObj.cashData,
                 fill: false,
                 borderColor: 'rgb(0, 128, 0)',
                 pointBackgroundColor: 'rgb(0, 128, 0)',
@@ -222,7 +201,6 @@ export default function Financials({company, shares, price}){
         
         ]
     };
-
 
     // function cfData(cashFlowsDataObj){
     //     const dataObj = {
@@ -263,7 +241,6 @@ export default function Financials({company, shares, price}){
     //     return dataObj
     // }
 
-
     // define options for LINE graphs
     const options = {
         responsive: true,
@@ -299,8 +276,7 @@ export default function Financials({company, shares, price}){
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        const label1 = context.dataset.label + ': ' + api[0].currency + ' ' + formatNumber(context.parsed.y, 3);
-                       
+                        const label1 = context.dataset.label + ': ' + bsData.companyBalanceSheets[0].currency + ' ' + formatNumber(context.parsed.y, 3);
                         return label1;
               }
             }
@@ -310,9 +286,7 @@ export default function Financials({company, shares, price}){
         scales: {
             x: {
                 ticks: {
-
                     stepSize: 5,
-
                 },
                 grid: {
                     color: 'rgba(0, 0, 0, 0)' // Adjust alpha (opacity) here
@@ -326,16 +300,13 @@ export default function Financials({company, shares, price}){
                     autoSkip: false
                 },
                 grid: {
-
                     color: 'rgba(0, 0, 0, 0.15)', // Adjust alpha (opacity) here
                     offset: false
-
                 }
             }
         },
     }
     
-
     // Define data for BAR graphs
     function barData(labels, data, dataSetLabel, backgroundColor = 'rgba(75, 192, 192, 0.2)', borderColor = 'rgba(75, 192, 192, 1)', borderWidth = 1){
         const dataObj = {
@@ -352,7 +323,6 @@ export default function Financials({company, shares, price}){
         };
         return dataObj
     }
-
 
     // Define options for BAR graphs
     function barOptions(header){
@@ -371,6 +341,7 @@ export default function Financials({company, shares, price}){
         return optionsObj
     }
 
+
 //// 2.) Render component in JSX ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     return(
         <>   
@@ -378,17 +349,17 @@ export default function Financials({company, shares, price}){
                 <div className = "border-2 rounded w-[90%] h-full">
                     <div className="flex flex-row">
                         <div className="w-1/3 text-sm p-3">
-                            <div className="flex flex-row"><span className="font-bold">Assets:</span><span className="text-right">{assetsData && formatNumber(assetsData[assetsData.length -1])}</span></div>
-                            <div className="flex flex-row"><span className="font-bold">Liabilities:</span><span className="text-right">{liabilitiesData && formatNumber(liabilitiesData[liabilitiesData.length -1])}</span></div>
-                            <div className="flex flex-row"><span className="font-bold">S/H Equity:</span><span className="text-right">{stockholdersData && formatNumber(stockholdersData[stockholdersData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Assets:</span><span className="text-right">{bsObj.assetsData && formatNumber(bsObj.assetsData[bsObj.assetsData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Liabilities:</span><span className="text-right">{bsObj.liabilitiesData && formatNumber(bsObj.liabilitiesData[bsObj.liabilitiesData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">S/H Equity:</span><span className="text-right">{bsObj.stockholdersData && formatNumber(bsObj.stockholdersData[bsObj.stockholdersData.length -1])}</span></div>
                         </div>
                         <div className="w-1/3 p-1">
                             <h2 className="text-center font-bold">Balance Sheet History</h2>
                             <h3 className="text-center text-sm">{company? company.name : "Company"}</h3>
-                            <h3 className="text-center text-xs">As of: {assetsLabels && assetsLabels[assetsLabels.length -1]}</h3>
+                            <h3 className="text-center text-xs">As of: {bsObj.assetsLabels && bsObj.assetsLabels[bsObj.assetsLabels.length -1]}</h3>
                         </div>
                         <div className="w-1/3 text-sm p-3 flex justify-end">
-                            <div className="flex flex-row"><span className="font-bold">Cash:</span><span>{cashData && formatNumber(cashData[cashData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Cash:</span><span>{bsObj.cashData && formatNumber(bsObj.cashData[bsObj.cashData.length -1])}</span></div>
                         </div>
                     </div>
                     <Line data={balanceSheetDataObj} options={options}/>
@@ -396,14 +367,14 @@ export default function Financials({company, shares, price}){
                 <div className = "border-2 rounded w-[90%] h-full">
                     <div className="flex flex-row">
                         <div className="w-1/3 text-sm p-3">
-                            <div className="flex flex-row"><span className="font-bold">Revenue:</span><span className="text-right">{revenueData && formatNumber(revenueData[revenueData.length -1])}</span></div>
-                            <div className="flex flex-row"><span className="font-bold">Operating Income:</span><span className="text-right">{opIncData && formatNumber(opIncData[opIncData.length -1])}</span></div>
-                            <div className="flex flex-row"><span className="font-bold">Net Income:</span><span className="text-right">{netIncomeData && formatNumber(netIncomeData[netIncomeData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Revenue:</span><span className="text-right">{incObj.revenueData && formatNumber(incObj.revenueData[incObj.revenueData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Operating Income:</span><span className="text-right">{incObj.opIncData && formatNumber(incObj.opIncData[incObj.opIncData.length -1])}</span></div>
+                            <div className="flex flex-row"><span className="font-bold">Net Income:</span><span className="text-right">{incObj.netIncomeData && formatNumber(incObj.netIncomeData[incObj.netIncomeData.length -1])}</span></div>
                         </div>
                         <div className="w-1/3 p-1">
                             <h2 className="text-center font-bold">Income Statement History</h2>
                             <h3 className="text-center text-sm">{company? company.name : "Company"}</h3>
-                            <h3 className="text-center text-xs">As of: {netIncomeLabels && netIncomeLabels[netIncomeLabels.length -1]}</h3>
+                            <h3 className="text-center text-xs">As of: {incObj.netIncomeLabels && incObj.netIncomeLabels[incObj.netIncomeLabels.length -1]}</h3>
                         </div>
                         <div className="w-1/3 text-sm p-3 flex justify-end">
                             
@@ -422,53 +393,3 @@ export default function Financials({company, shares, price}){
         </>
     )
 }
-
- ////////// OLD FINANCIAL BAR
-    // <div id ="stats" className="w-[95%] flex flex-row border rounded">
-    //     <div className="w-[33%] px-5 py-2 text-gray-50 font-mono tracking-tight text-xs">
-    //             <p className='text-lg font-bold tracking-normal'>🔑 Financials</p>
-    //             <div className="flex flex-row justify-left">
-    //                 <table>
-    //                     <tbody>
-    //                         <tr className=""><th className='font-bold text-left'>Assets:&nbsp;</th><th className="text-right font-medium">{api.length > 0 && api[0].currency ? api[0].currency : ''} {company && assetsData.length > 0 ? formatNumber(assetsData[assetsData.length - 1], 3) : ''}</th></tr>
-    //                         <tr className=""><th className='font-bold text-left'>Liabilities:&nbsp;</th><th className="text-right font-medium">{api.length > 0 && api[0].currency ? api[0].currency : ''} {company && liabilitiesData.length > 0 ? formatNumber(liabilitiesData[liabilitiesData.length - 1], 3) : ''}</th></tr>
-    //                         <tr className=""><th className='font-bold text-left'>Stockholders Equity:&nbsp;</th><th className="text-right font-medium">{api.length > 0 && api[0].currency ? api[0].currency : ''} {company && stockholdersData.length > 0 ? formatNumber(stockholdersData[stockholdersData.length - 1], 3) : ''}</th></tr>
-    //                         <tr className=""><th className='font-bold text-left'>Cash:&nbsp;</th><th className="text-right font-medium">{api.length > 0 && api[0].currency ? api[0].currency : ''} {company && cashData.length > 0 ? formatNumber(cashData[cashData.length - 1], 3) : ''}</th></tr>
-    //                     </tbody>
-    //                 </table>
-    //                 <table className="ml-5">
-    //                     <tbody>
-    //                         <tr className=""><th className='font-bold text-left'>Revenue (Q):&nbsp;</th><th className="text-right font-medium">{incApi.length > 0 && incApi[0].currency ? incApi[0].currency : ''} {company && revenueData.length > 0 ? formatNumber(revenueData[revenueData.length - 1], 3) : ''}</th></tr>
-    //                         <tr className=""><th className='font-bold text-left'>Net Income (Q):&nbsp;</th><th className="text-right font-medium">{incApi.length > 0 && incApi[0].currency ? incApi[0].currency : ''} {company && netIncomeData.length > 0 ? formatNumber(netIncomeData[netIncomeData.length - 1], 3) : ''}</th></tr>
-    //                         <tr className=""><th className='font-bold text-right'>&nbsp;</th><th className="text-right font-medium"></th></tr>
-    //                         <tr className=""><th className='font-bold text-right'>&nbsp;</th><th className="text-right font-medium"></th></tr>
-    //                     </tbody>
-    //                 </table>
-    //             </div> 
-    //     </div>
-
-    //     <div className="w-[33%] px-5 py-2 ml-12 font-mono tracking-tight text-gray-50 text-xs">  
-    //         <p className='text-lg font-bold tracking-normal'>📊 Valuation</p>
-    //         <table className="w-[75%]">
-    //             <tbody>
-    //                 <tr className=""><th className='font-bold text-left'>Market Capitalization:&nbsp;</th><th className="text-right font-medium">{incApi.length > 0 && incApi[0].currency ? incApi[0].currency : ''}{" " + formatNumber(setMarketCap(shares, price))}</th></tr>
-    //                 <tr className=""><th className='font-bold text-left'>Earnings per Share (EPS):&nbsp;</th><th className="text-right font-medium">{incApi.length > 0 && incApi[0].currency ? incApi[0].currency : ''}{company && incApi && incApi[incApi.length - 1]?.eps?  " " + incApi[incApi.length - 1].eps.toFixed(2) : 0}</th></tr>
-    //                 <tr className=""><th className='font-bold text-left'>Price-to-Earnings ratio (P/E):&nbsp;</th><th className="text-right font-medium">{company && incApi && incApi[incApi.length - 1]?.eps? (price / incApi[incApi.length - 1].eps).toFixed(2) : 0}</th></tr>
-    //                 <tr className=""><th className='font-bold text-left'>Price-to-Sales ratio (P/S):&nbsp;</th><th className="text-right font-medium">{company && incApi.length > 0 ? ((shares * price) / (incApi[incApi.length - 1].total_revenue * 4)).toFixed(2) : ''}</th></tr>
-    //                 {/* <tr className=""><th className=' font-bold text-left'>Enterprise Value (EV):&nbsp;</th><th className="text-right font-medium">{incApi.length > 0 && incApi[0].currency ? incApi[0].currency : ''}</th></tr> */}
-    //                 </tbody>
-    //             </table>
-    //     </div>
-
-    //     <div className="w-[33%] px-5 py-2 ml-12 text-gray-50 font-mono tracking-tight text-xs">
-    //             <p className='text-lg font-bold tracking-normal'>Shares Info.</p>
-    //             <table>
-    //             <tbody>
-    //                 <tr className=""><th className='font-bold text-left'>Shares Outstanding:&nbsp;</th><th className="text-right font-medium">{shares && formatNumber(shares)}</th></tr>
-    //                 {/* <tr className=""><th className='font-bold text-left'>Borrow Rate %:&nbsp;</th><th className="content-center"></th></tr>
-    //                 <tr className=""><th className='font-bold text-left'>Short Float %:&nbsp;</th><th className="content-center"></th></tr> */}
-    //             </tbody>
-    //             </table>
-    //     </div>
-
-    // </div>

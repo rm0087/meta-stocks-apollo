@@ -4,17 +4,40 @@ import Routes from "./Routes";
 import CompanyInfo from "./CompanyInfo";
 import Financials from "./Financials";
 import Keywords from "./Keywords";
+import { useQuery, useLazyQuery, gql } from "@apollo/client";
+
+const GET_COMPANY = gql`
+    query GetCompany($ticker: String!) {
+        getCompany(ticker: $ticker) {
+            cik
+            ticker
+            name
+            cik_10
+        }
+    }
+`
 
 export default function App() {
-    const[company, setCompany] = useState('')
-    const[searchValue, setSearchValue] = useState('')
+    const [queryTicker, setQueryTicker] = useState("");
+    
+    const [getCompany, { loading: coLoading, error: coError, data: coData }] = useLazyQuery(GET_COMPANY);
+
+    useEffect(()=>{
+        if (coData) {
+            setCompany(coData.getCompany)
+            setQuery("")
+            setSuggestions("") 
+        }
+    },[coData])
+
+    const[company, setCompany] = useState('');
     const [query, setQuery] = useState('');  // The current value of the search input
     const [suggestions, setSuggestions] = useState([]);  // The list of company suggestions
     const [loading, setLoading] = useState(false);  // Loading state for making requests
     const [price, setPrice] = useState(0);
     const [shares, setShares] = useState(0);
-    const [filings, setFilings] = useState({})
-    const serverUrl = "https://meta-stocks-demo.onrender.com"
+    const [filings, setFilings] = useState({});
+    const serverUrl = "https://meta-stocks-demo.onrender.com";
    
     // Function to handle input changes
     const handleInputChange = (event) => {
@@ -52,35 +75,6 @@ export default function App() {
         }
     };
     
-
-    const fetchCompanyDetails = async (companyTicker) => {
-        setQuery('');
-        setSuggestions([])
-    
-        try {
-            const response = await fetch(`companies/${companyTicker}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                
-            });
-            
-    
-            if (!response.ok) {
-                throw new Error('Failed to find company');
-            }
-    
-            const data = await response.json();
-    
-            setCompany(data);
-        
-        } catch (error) {
-            console.error('Error searching companies:', error);
-        }
-    };
-
     useEffect(()=>{
         if (company) {
             const fetchPrice = async () => {
@@ -157,35 +151,6 @@ export default function App() {
         }
     },[company])
     
-    const fetchCompany = async (e) => {
-        e.preventDefault();
-        setQuery('');
-        setSuggestions([])
-    
-        try {
-            const response = await fetch(`companies/${e.target.value}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to find company');
-            }
-    
-            const data = await response.json();
-            // const data2 = await quoteApi.json()
-            setCompany(data);
-            // setPrice(data2)
-            
-            
-        } catch (error) {
-            console.error('Error searching companies:', error);
-        }
-    };
-
     const formatTimestamp = (timestamp) => {
         const date = new Date(timestamp);
       
@@ -202,35 +167,16 @@ export default function App() {
         // Format as MM/DD/YYYY @HH:mm:ss
         return `${month}/${day}/${year}`;
       };
-   
-    // useEffect(() => {
-    //     const fetchCompanyJsonTest = async () => {
-    //         setQuery('');
-    //         setSuggestions([])
-        
-    //         try {
-    //             const response = await fetch(`/companyfacts2/${company.ticker}`);
-    //             if (!response.ok) {
-    //                 throw new Error('Failed to find company');
-    //             }
-        
-    //             const data = await response.json();
-    //         } catch (error) {
-    //             console.error('Error searching companies:', error);
-    //         }
-    //     };
-    //     fetchCompanyJsonTest()
-    // }, [company.ticker]);
        
     return(
         <>
-            <form id='company-search-form' className="shadow-md px-10 bg-gray-500" onSubmit={fetchCompany}>
+            <form id='company-search-form' className="shadow-md px-10 bg-gray-500" onSubmit={(e)=> {e.preventDefault(); getCompany({ variables: { ticker: e.target.value}})}}>
                 <input id='company-input' className="border rounded m-1 font-mono tracking-tighter px-2 bg-gray-200" type='text' value={query} onChange={handleInputChange} placeholder="Company or Ticker" autoComplete="off"/>
             
                 {suggestions.length > 0 && (
                     <ul className="absolute bg-white border border-gray-300 rounded mt-1 z-10 inline-block shadow-lg max-h-100 overflow-y-auto">
                     {suggestions.map((company) => (
-                        <li key={company.id} className="p-1 hover:bg-gray-200 cursor-pointer whitespace-nowrap font-mono text-base" value onClick={() => fetchCompanyDetails(company.ticker)}>{company.name} - ({company.ticker}) </li>
+                        <li key={company.id} className="p-1 hover:bg-gray-200 cursor-pointer whitespace-nowrap font-mono text-base" value onClick={() => getCompany({ variables: { ticker: company.ticker}})}>{company.name} - ({company.ticker}) </li>
                     ))}
                     </ul>
                 )}

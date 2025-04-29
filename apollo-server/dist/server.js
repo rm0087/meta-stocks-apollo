@@ -1,27 +1,58 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
-import BalanceSheetsApi from './balance-sheet-api.js';
+import BalanceSheetsAPI from './balance-sheet-api.js';
+import IncomeStatementsAPI from './income-statement-api.js';
+import CompaniesAPI from './companies-api.js';
 const typeDefs = `
     type BalanceSheet {
         company_cik: Int
         total_assets: String
         total_liabilities: String
         total_stockholders_equity: String
+        end: String
+        cash_and_equiv: String
+        currency: String
+    }
+
+    type IncomeStatement {
+        company_cik: Int
+        net_income: String
+        total_revenue: String
+        operating_income: String
+        end: String
+        currency: String
+    }
+
+    type Company {
+        name: String
+        ticker: String
+        cik: Int
+        cik_10: String
     }
 
     type Query {
         balanceSheets: [BalanceSheet]
         companyBalanceSheets(cik: Int!): [BalanceSheet]
+        companyIncomeStatements(cik: Int!): [IncomeStatement]
+        getCompany(ticker: String!): Company
     }
 `;
 const resolvers = {
     Query: {
+        getCompany: async (_, { ticker }, { dataSources }) => {
+            return dataSources.companiesAPI.getCompany(ticker);
+        },
         balanceSheets: async (_, __, { dataSources }) => {
             return dataSources.balanceSheetAPI.getBalanceSheets();
         },
         companyBalanceSheets: async (_, { cik }, { dataSources }) => {
+            console.log(cik);
+            console.log(dataSources.balanceSheetAPI.companyBalanceSheets(cik));
             return dataSources.balanceSheetAPI.companyBalanceSheets(cik);
-        }
+        },
+        companyIncomeStatements: async (_, { cik }, { dataSources }) => {
+            return dataSources.incomeStatementAPI.companyIncomeStatements(cik);
+        },
     }
 };
 const server = new ApolloServer({
@@ -33,7 +64,9 @@ const { url } = await startStandaloneServer(server, {
         const { cache } = server;
         return {
             dataSources: {
-                balanceSheetAPI: new BalanceSheetsApi({ cache }),
+                balanceSheetAPI: new BalanceSheetsAPI({ cache }),
+                incomeStatementAPI: new IncomeStatementsAPI({ cache }),
+                companiesAPI: new CompaniesAPI({ cache }),
             },
         };
     },
