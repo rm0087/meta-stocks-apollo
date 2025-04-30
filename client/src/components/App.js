@@ -71,6 +71,15 @@ const GET_SUGGESTIONS = gql`
     }
 
 `
+const GET_QUOTES = gql`
+    query GetQuotes($ticker: String!) {
+        getQuotes(ticker: $ticker) {
+            c
+            t
+        }
+    }
+`
+
 export default function App() {
     const [company, setCompany] = useState('');
     const [query, setQuery] = useState('');  // The current value of the search input
@@ -84,7 +93,7 @@ export default function App() {
         onCompleted: (data) => {
             if (data && data.getCompany){
                 setCompany(data.getCompany)
-            }
+            };
         }
     });
     
@@ -92,7 +101,7 @@ export default function App() {
         onCompleted: (data) => {
             if (data && data.getCompanyFilings) {
                 setFilings(data.getCompanyFilings);
-            }
+            };
         },
         onError: (error) => {
             console.error("Filings query error:", error);
@@ -102,27 +111,34 @@ export default function App() {
     const [getSuggestions, { loading: sugLoading, error: sugError, data: sugData}] = useLazyQuery(GET_SUGGESTIONS,{
         onCompleted: (data) => {
             if (data && data.getSuggestions) {
-                setSuggestions(data.getSuggestions)
-            }
+                setSuggestions(data.getSuggestions);
+            };
         }
     });
 
-    useEffect(()=>{
-        if (coData && coData.getCompany) {
-            // setCompany(coData.getCompany)
-            setQuery("")
-            setSuggestions("") 
+    const [getQuotes, { loading: quoLoading, error: quoError, data: quoData }] = useLazyQuery(GET_QUOTES, {
+        onCompleted: (data) => {
+            if (data && data.getQuotes) {
+                setPrice(data.getQuotes);
+            };
         }
-    },[coData])
+    });
 
     useEffect(() => {
+        setQuery("");
+        setSuggestions("");
+
         if (company && company.cik_10) {
-          console.log("Fetching filings for cik_10:", company.cik_10);
           getCompanyFilings({ 
             variables: { cik_10: company.cik_10 }
           });
-        }
-      }, [company, company.cik_10, getCompanyFilings]);
+
+          getQuotes({
+            variables: { ticker: company.ticker }
+          });
+        };
+        
+      },[company]);
 
     useEffect(()=>{
         if (query) {
@@ -131,32 +147,7 @@ export default function App() {
             })
         }
     },[query])
-
-    useEffect(()=>{
-        if (company) {
-            const fetchPrice = async () => {
-                try {
-                    const response = await fetch(`quotes/${company.ticker}`)
-
-                    if (!response.ok) {
-                        setPrice(0)
-                        throw new Error('Failed to retrieve quote')
-                        
-                    }
-                    const data = await response.json()
-                    setPrice(data.bars?.[company.ticker?.replace("-", ".")]?.[0]?.c)
-                
-                } catch (error) {
-                    console.error('Error retrieving price', error)
-                }
-            };
-
-            document.title = `${company.ticker} - MetaStocks`
-
-            fetchPrice()
-        }
-    },[company])
-
+    
     const handleSumbit = (e) => {
         e.preventDefault(); 
         getCompany({ variables: { ticker: query}});
@@ -207,11 +198,9 @@ export default function App() {
                 
                 <input id='company-submit-button' className="m-1 border border-black text-sm px-1" type='submit' value="Search"/>
                 <div className="flex flex-row w-full pl-2">
-                    <h1 id = "co-header" className="font-mono font-bold text-xl">{company ? `${company.ticker} - ${company.name} - $${price}` : "Search for a company"}</h1>
+                    <h1 id = "co-header" className="font-mono font-bold text-xl">{company ? `${company.ticker} - ${company.name} - $${price.c}` : "Search for a company"}</h1>
                     <span className="flex flex-row"></span>
                 </div>
-
-                
             </form>
             
             <div id="wrapper" className="flex flex-col items-center w-full h-full pb-5">

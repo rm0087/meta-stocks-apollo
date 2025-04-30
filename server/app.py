@@ -177,7 +177,7 @@ def get_quotes(ticker: str):
     f_start = start.isoformat() + "Z"
    
     r = requests.get(f'https://data.alpaca.markets/v2/stocks/bars?symbols={f_ticker}&timeframe=1Day&start={f_start}&limit=1000&adjustment=raw&feed=sip&sort=desc', headers=headers)
-    
+
     if not r.ok:
         return "Quote could not be retrieved", r.status_code
     return jsonify(r.json()), r.status_code

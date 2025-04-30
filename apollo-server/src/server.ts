@@ -5,6 +5,7 @@ import IncomeStatementsAPI from './income-statement-api.js';
 import CompaniesAPI from './companies-api.js';
 import FilingsAPI from './filings-api.js';
 import SuggestionsAPI from './suggestions-api.js';
+import QuotesAPI from './quotes-api.js';
 
 
 const typeDefs = `
@@ -51,6 +52,17 @@ const typeDefs = `
         institutions: [Filing]
         latest: [Filing]
     }
+    
+    type Quote {
+        c: String
+        h: String
+        l: String
+        n: String
+        o: String
+        t: String
+        v: String
+        vw: String
+    }
 
     type Query {
         balanceSheets: [BalanceSheet]
@@ -59,6 +71,7 @@ const typeDefs = `
         getCompany(ticker: String!): Company
         getCompanyFilings(cik_10: String!): Filings
         getSuggestions(query: String!): [Company]
+        getQuotes(ticker: String!): Quote
     }
 `
 
@@ -69,6 +82,7 @@ interface ContextValue {
         companiesAPI: CompaniesAPI,
         filingsAPI: FilingsAPI,
         suggestionsAPI: SuggestionsAPI,
+        quotesAPI: QuotesAPI,
     };
 }
 
@@ -89,6 +103,9 @@ const resolvers = {
         getSuggestions: async (_, { query }, { dataSources }) => {
             return dataSources.suggestionsAPI.getSuggestions(query);
         },
+        getQuotes: async (_, { ticker }, { dataSources }) => {
+            return dataSources.quotesAPI.getQuotes(ticker);
+        },
     }
 }
 
@@ -106,7 +123,8 @@ const { url } = await startStandaloneServer(server, {
           incomeStatementAPI: new IncomeStatementsAPI({ cache }),
           companiesAPI: new CompaniesAPI({ cache }),
           filingsAPI: new FilingsAPI({ cache }),
-          suggestionsAPI: new SuggestionsAPI({ cache })
+          suggestionsAPI: new SuggestionsAPI({ cache }),
+          quotesAPI: new QuotesAPI( { cache }),
         },
       };
     },
