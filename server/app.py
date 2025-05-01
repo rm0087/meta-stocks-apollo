@@ -195,23 +195,24 @@ def get_all_keywords():
 @app.route('/association', methods=['POST'])
 def set_association():
     data = request.json
-    c_id = int(data[0])
-    k_id = int(data[1])
-    con = data[2]
-    company = db.session.get(Company, c_id)
-    keyword = db.session.get(Keyword, k_id)
+    print(data)
+    try:
+        c_ticker = data['ticker'].upper()
+        k_id = data['keywordId']
     
-    assoc = CoKeyAssoc.query.filter(CoKeyAssoc.company_id==c_id, CoKeyAssoc.keyword_id==k_id).first()
-    
-    if assoc and len(assoc.context) > 0:
-        print(assoc)
-        assoc.context = assoc.context + [con]
-    else:
-        assoc = CoKeyAssoc(company_id=c_id, keyword_id=k_id, context=[con])
+        company = Company.query.filter(Company.ticker == c_ticker).first()
+        keyword = db.session.get(Keyword, k_id)
+        
+        if CoKeyAssoc.query.filter(CoKeyAssoc.company_id==company.id, CoKeyAssoc.keyword_id==keyword.id).first():
+            return jsonify({'error': 'Association already exists'}), 400
+        
+        assoc = CoKeyAssoc(company_id=company.id, keyword_id=keyword.id)
 
-    db.session.add(assoc)
-    db.session.commit()
-    return jsonify(f'Successfully added {keyword.word} to {company.name}'), 200
+        db.session.add(assoc)
+        db.session.commit()
+        return jsonify(assoc.to_dict()), 200
+    except Exception as e:
+        return jsonify(e), 400
 
 @app.route('/api/companies/search', methods=['GET'])
 def search_companies():

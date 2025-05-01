@@ -6,6 +6,7 @@ import CompaniesAPI from './companies-api.js';
 import FilingsAPI from './filings-api.js';
 import SuggestionsAPI from './suggestions-api.js';
 import QuotesAPI from './quotes-api.js';
+import KeywordsAPI from './keywords-api.js';
 
 
 const typeDefs = `
@@ -64,6 +65,19 @@ const typeDefs = `
         vw: String
     }
 
+    type Keyword {
+        id: ID
+        word: String
+        type: String
+        description: String
+    }
+
+    type CoKeyRelationship {
+        id: ID
+        company_id: Int
+        keyword_id: Int
+    }
+
     type Query {
         balanceSheets: [BalanceSheet]
         companyBalanceSheets(cik: Int!): [BalanceSheet]
@@ -72,9 +86,14 @@ const typeDefs = `
         getCompanyFilings(cik_10: String!): Filings
         getSuggestions(query: String!): [Company]
         getQuotes(ticker: String!): Quote
+        getKeywords: [Keyword]
+    }
+    
+    type Mutation {
+        postCoKeyRelationship(ticker: String, keywordId: Int): CoKeyRelationship
     }
 `
-
+// Create seperate API file for the dataSources before continuing
 interface ContextValue {
     dataSources: {
         balanceSheetAPI: BalanceSheetsAPI,
@@ -83,6 +102,7 @@ interface ContextValue {
         filingsAPI: FilingsAPI,
         suggestionsAPI: SuggestionsAPI,
         quotesAPI: QuotesAPI,
+        keywordsAPI: KeywordsAPI,
     };
 }
 
@@ -106,7 +126,16 @@ const resolvers = {
         getQuotes: async (_, { ticker }, { dataSources }) => {
             return dataSources.quotesAPI.getQuotes(ticker);
         },
+        getKeywords: async (_, __, { dataSources }) => {
+            return dataSources.keywordsAPI.getKeywords();
+        },
+    },
+    Mutation: {
+        postCoKeyRelationship: async (_, { ticker, keywordId }, { dataSources}) => {
+            return dataSources.keywordsAPI.postCoKeyRelationship(ticker, keywordId);
+        },
     }
+
 }
 
 const server = new ApolloServer<ContextValue>({
@@ -125,6 +154,7 @@ const { url } = await startStandaloneServer(server, {
           filingsAPI: new FilingsAPI({ cache }),
           suggestionsAPI: new SuggestionsAPI({ cache }),
           quotesAPI: new QuotesAPI( { cache }),
+          keywordsAPI: new KeywordsAPI({ cache })
         },
       };
     },

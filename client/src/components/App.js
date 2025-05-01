@@ -5,6 +5,7 @@ import CompanyInfo from "./CompanyInfo";
 import Financials from "./Financials";
 import Keywords from "./Keywords";
 import { useQuery, useLazyQuery, gql } from "@apollo/client";
+import KeywordsEditor from "./KeywordsEditor";
 
 const GET_COMPANY = gql`
     query GetCompany($ticker: String!) {
@@ -89,6 +90,7 @@ export default function App() {
     const [filings, setFilings] = useState({});
     const serverUrl = "https://meta-stocks-demo.onrender.com";
     
+    
     const [getCompany, { loading: coLoading, error: coError, data: coData }] = useLazyQuery(GET_COMPANY, {
         onCompleted: (data) => {
             if (data && data.getCompany){
@@ -129,13 +131,16 @@ export default function App() {
         setSuggestions("");
 
         if (company && company.cik_10) {
-          getCompanyFilings({ 
-            variables: { cik_10: company.cik_10 }
-          });
+            document.title = `${company.ticker} - MetaStocks`
+            getCompanyFilings({ 
+                variables: { cik_10: company.cik_10 }
+            });
 
-          getQuotes({
-            variables: { ticker: company.ticker }
-          });
+            getQuotes({
+                variables: { ticker: company.ticker }
+            });
+        } else {
+            document.title = `Home - MetaStocks`
         };
         
       },[company]);
@@ -204,9 +209,10 @@ export default function App() {
             </form>
             
             <div id="wrapper" className="flex flex-col items-center w-full h-full pb-5">
-                <CompanyInfo company={company} filings={filings}/> 
-                {/* <Keywords company={company} /> */}
-                <Financials company={company} shares={shares} price={price}/>
+                {/* <CompanyInfo company={company} filings={filings}/> 
+                <Keywords company={company} />
+                <Financials company={company} shares={shares} price={price}/> */}
+                <KeywordsEditor/>
             </div>
         </>
   );
