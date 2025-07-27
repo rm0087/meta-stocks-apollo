@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ipdb = "*"
+flask = "*"
+flask-sqlalchemy = "*"
+Werkzeug = "*"
+flask-migrate = "*"
+sqlalchemy-serializer = "*"
+flask-restful = "*"
+faker = "*"
+requests = "*"
+python-dotenv = "*"
+feedparser = "*"
+flask-cors = "*"
+anthropic = "*"
+markdown = "*"
+
+[requires]
+python_version = "3.12"
+
+[dev-packages]
