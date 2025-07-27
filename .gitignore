@@ -71,3 +71,4 @@ client/src/.env
 
 Pipfile.lock
 package-lock.json
+dist
