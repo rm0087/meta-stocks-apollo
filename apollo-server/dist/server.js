@@ -117,6 +117,10 @@ const resolvers = {
     },
     Mutation: {
         postCoKeyRelationship: async (_, { ticker, keywordId }, { dataSources }) => {
+<<<<<<< HEAD
+=======
+            console.log(ticker, keywordId);
+>>>>>>> 93c78a0a3b636783825d9bc96a489f115b4586ac
             return dataSources.keywordsAPI.postCoKeyRelationship(ticker, keywordId);
         },
     }

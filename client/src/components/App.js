@@ -209,10 +209,17 @@ export default function App() {
             </form>
             
             <div id="wrapper" className="flex flex-col items-center w-full h-full pb-5">
+<<<<<<< HEAD
                 <CompanyInfo company={company} filings={filings}/> 
                 <Keywords company={company} />
                 <Financials company={company} shares={shares} price={price}/>
                 
+=======
+                {/* <CompanyInfo company={company} filings={filings}/> 
+                <Keywords company={company} />
+                <Financials company={company} shares={shares} price={price}/> */}
+                <KeywordsEditor/>
+>>>>>>> 93c78a0a3b636783825d9bc96a489f115b4586ac
             </div>
         </>
   );

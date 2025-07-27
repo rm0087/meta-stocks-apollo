@@ -60,6 +60,26 @@
 
    The application will run on `http://localhost:3000`.
 
+<<<<<<< HEAD
+### Apollo (GraphQL) Server Setup
+
+1. **Navigate to the apollo-server directory**:
+```bash
+cd ../apollo-server
+```
+
+2. **Install Node.js dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Start Apollo Server**:
+   ```bash
+   npm start
+   ```
+
+=======
+>>>>>>> 93c78a0a3b636783825d9bc96a489f115b4586ac
 ## Usage
 
 - **Accessing the Application**: Open your browser and go to `http://localhost:3000`.
