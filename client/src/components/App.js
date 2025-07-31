@@ -208,7 +208,7 @@ export default function App() {
                 </div>
             </form>
             
-            <div id="wrapper" className="flex flex-col items-center w-full h-full pb-5">
+            <div id="wrapper" className="flex flex-col items-center w-full h-full pb-5 bg-blue-900">
                 <CompanyInfo company={company} filings={filings}/> 
                 <Keywords company={company} />
                 <Financials company={company} shares={shares} price={price}/>

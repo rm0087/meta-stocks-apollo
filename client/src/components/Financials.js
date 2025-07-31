@@ -126,22 +126,25 @@ export default function Financials({company, shares, price}){
             {
                 label: 'Net Income',
                 data: incObj.netIncomeData,
-                fill: false,
-                borderColor: 'rgb(255, 0, 0)',
-                pointBackgroundColor: 'rgb(255, 0, 0)',
+                fill: true,
+                fillColor: 'rgb(0, 128, 0)',
+                borderColor: 'rgb(0, 128, 0)',
+                pointBackgroundColor: 'rgb(0, 128, 0)',
                 pointBorderColor: 'rgb(0, 0, 0)',
                 pointBorderWidth: .5,
-                tension: 0.4
+                tension: 0.4,
+                backgroundColor: 'rgb(0, 128, 0)',
             }, 
             {
                 label: 'Revenue',
                 data: incObj.revenueData,
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                pointBackgroundColor: 'rgb(75, 192, 192)',
+                fill: true,
+                borderColor: 'rgb(255, 0, 0)',
+                pointBackgroundColor: 'rgb(255, 0, 0)',
                 pointBorderColor: 'rgb(0, 0, 0)',
                 pointBorderWidth: .5,
-                tension: 0.4
+                tension: 0.4,
+                backgroundColor: 'rgb(255, 0, 0)'
             },
             {
                 label: 'Operating Income',
@@ -163,26 +166,6 @@ export default function Financials({company, shares, price}){
         labels: bsObj.assetsLabels,
         datasets: [
             {
-                label: 'Assets',
-                data: bsObj.assetsData,
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                pointBackgroundColor: 'rgb(75, 192, 192)',
-                pointBorderColor: 'rgb(0, 0, 0)',
-                pointBorderWidth: .5,
-                tension: 0.4
-            },
-            {
-                label: 'Liabilities',
-                data: bsObj.liabilitiesData,
-                fill: false,
-                borderColor: 'rgb(255, 0, 0)',
-                pointBackgroundColor: 'rgb(255, 0, 0)',
-                pointBorderColor: 'rgb(0, 0, 0)',
-                pointBorderWidth: .5,
-                tension: 0.4
-            },
-            {
                 label: `Stockholders' Equity`,
                 data: bsObj.stockholdersData,
                 fill: false,
@@ -195,13 +178,39 @@ export default function Financials({company, shares, price}){
             {
                 label: `Cash and Equivalents`,
                 data: bsObj.cashData,
-                fill: false,
+                fill: true,
                 borderColor: 'rgb(0, 128, 0)',
                 pointBackgroundColor: 'rgb(0, 128, 0)',
                 pointBorderColor: 'rgb(0, 0, 0)',
                 pointBorderWidth: .5,
-                tension: 0.4
-            }
+                tension: 0.4,
+                backgroundColor: 'rgb(0, 128, 0)'
+            },
+            {
+                label: 'Liabilities',
+                data: bsObj.liabilitiesData,
+                fill: true,
+                borderColor: 'rgb(255, 0, 0)',
+                pointBackgroundColor: 'rgb(255, 0, 0)',
+                pointBorderColor: 'rgb(0, 0, 0)',
+                pointBorderWidth: .5,
+                tension: 0.4,
+                backgroundColor: 'rgb(255, 0, 0)'
+            },
+            {
+                label: 'Assets',
+                data: bsObj.assetsData,
+                fill: true,
+                borderColor: 'rgb(75, 192, 192)',
+                pointBackgroundColor: 'rgb(75, 192, 192)',
+                pointBorderColor: 'rgb(0, 0, 0)',
+                pointBorderWidth: .5,
+                tension: 0.4,
+                backgroundColor: 'rgb(75, 192, 192)'
+            },
+            
+            
+            
         
         ]
     };
@@ -349,8 +358,8 @@ export default function Financials({company, shares, price}){
 //// 2.) Render component in JSX ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     return(
         <>   
-            <div id ="cash-graph-div" className="md:grid grid-cols-2 gap-4 place-items-center mt-5 w-full h-full font-mono text-lg">
-                <div className = "border-2 rounded w-[90%] h-full">
+            <div id ="cash-graph-div" className="md:grid grid-cols-2 gap-4 place-items-center mt-5 w-full h-full font-mono text-lg ">
+                <div className = "border-2 rounded w-[90%] h-full bg-white bg-opacity-50">
                     <div className="flex flex-row">
                         <div className="w-1/3 text-sm p-3">
                             <div className="flex flex-row"><span className="font-bold">Assets:</span><span className="text-right">{bsObj.assetsData && formatNumber(bsObj.assetsData[bsObj.assetsData.length -1])}</span></div>
@@ -368,8 +377,8 @@ export default function Financials({company, shares, price}){
                     </div>
                     <Line data={balanceSheetDataObj} options={options}/>
                 </div>
-                <div className = "border-2 rounded w-[90%] h-full">
-                    <div className="flex flex-row">
+                <div className = "border-2 rounded w-[90%] h-full bg-white bg-opacity-50">
+                    <div className="flex flex-row ">
                         <div className="w-1/3 text-sm p-3">
                             <div className="flex flex-row"><span className="font-bold">Revenue:</span><span className="text-right">{incObj.revenueData && formatNumber(incObj.revenueData[incObj.revenueData.length -1])}</span></div>
                             <div className="flex flex-row"><span className="font-bold">Operating Income:</span><span className="text-right">{incObj.opIncData && formatNumber(incObj.opIncData[incObj.opIncData.length -1])}</span></div>

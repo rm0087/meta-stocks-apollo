@@ -168,7 +168,7 @@ export default function CompanyInfo({company, filings}) {
         <div className="w-[100%] flex justify-center mt-5">
             {isOpen? <AiPopup/>: null}
             <div className="w-[95%] flex flex-row ">
-                <div className="w-[25%] font-mono tracking-tight text-xs border-2 rounded">
+                <div className="w-[25%] font-mono tracking-tight text-xs border-2 rounded bg-white bg-opacity-50">
                     <div className="px-5 py-2">
                         <h2 className="text-lg font-bold">🏢 Company Info.</h2>
                         <table>
@@ -184,7 +184,7 @@ export default function CompanyInfo({company, filings}) {
 
                     </div>
                 </div>
-                <div className="w-[100%] font-mono tracking-tight font-mono tracking-tight text-xs border-2 rounded ml-5">
+                <div className="w-[100%] font-mono tracking-tight font-mono tracking-tight text-xs border-2 rounded ml-5 bg-white bg-opacity-50">
                     <div className="px-5 py-2">
                         <span className="flex flex-row">
                             <h2 className="text-lg font-bold">🏢 Filings</h2><a rel="norefferer" target= "_blank" href = {"https://www.sec.gov/edgar/search/#/dateRange=10y&ciks="+company.cik_10}>View all</a>
