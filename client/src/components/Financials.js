@@ -25,6 +25,9 @@ const GET_INCOME_STATEMENTS = gql`
             net_income
             total_revenue
             operating_income
+            cogs
+            operating_expenses
+            total_expenses_net_of_tax
             end
             currency
         }
@@ -52,6 +55,9 @@ export default function Financials({company, shares, price}){
         netIncomeData: "",
         revenueData: "",
         opIncData: "",
+        cogsData: "",
+        opExData: "",
+        totalExData: "",
         netIncomeLabels: "",
     }
 
@@ -103,13 +109,17 @@ export default function Financials({company, shares, price}){
                 ['netIncomeLabels']: incData.companyIncomeStatements.map(inc => inc.end),
                 ['netIncomeData']: incData.companyIncomeStatements.map(inc => inc.net_income),
                 ['revenueData']: incData.companyIncomeStatements.map(inc => inc.total_revenue),
-                ['opIncData']: incData.companyIncomeStatements.map(inc => inc.operating_income)
+                ['opIncData']: incData.companyIncomeStatements.map(inc => inc.operating_income),
+                ['cogsData']: incData.companyIncomeStatements.map(inc => inc.cogs),
+                ['opExData']: incData.companyIncomeStatements.map(inc => inc.operating_expenses),
+                ['totalExData']: incData.companyIncomeStatements.map(inc => inc.total_expenses_net_of_tax)
+                
             })
 
         } else {
             setIncObj(incDefaults)
         }
-
+        console.log(incError)
     },[bsData, incData])
 
         
@@ -127,17 +137,17 @@ export default function Financials({company, shares, price}){
                 label: 'Net Income',
                 data: incObj.netIncomeData,
                 fill: true,
-                fillColor: 'rgb(0, 128, 0)',
-                borderColor: 'rgb(0, 128, 0)',
-                pointBackgroundColor: 'rgb(0, 128, 0)',
+                fillColor: 'rgb(75, 192, 192)',
+                borderColor: 'rgb(75, 192, 192)',
+                pointBackgroundColor: 'rgb(75, 192, 192)',
                 pointBorderColor: 'rgb(0, 0, 0)',
                 pointBorderWidth: .5,
                 tension: 0.4,
-                backgroundColor: 'rgb(0, 128, 0)',
-            }, 
+                backgroundColor: 'rgb(75, 192, 192)',
+            },
             {
-                label: 'Revenue',
-                data: incObj.revenueData,
+                label: 'Operating Expenses',
+                data: incObj.totalExData,
                 fill: true,
                 borderColor: 'rgb(255, 0, 0)',
                 pointBackgroundColor: 'rgb(255, 0, 0)',
@@ -145,18 +155,29 @@ export default function Financials({company, shares, price}){
                 pointBorderWidth: .5,
                 tension: 0.4,
                 backgroundColor: 'rgb(255, 0, 0)'
-            },
+            }, 
+            // {
+            //     label: 'COGS',
+            //     data: incObj.cogsData,
+            //     fill: true,
+            //     borderColor: 'rgb(255, 0, 0)',
+            //     pointBackgroundColor: 'rgb(255, 0, 0)',
+            //     pointBorderColor: 'rgb(0, 0, 0)',
+            //     pointBorderWidth: .5,
+            //     tension: 0.4,
+            //     backgroundColor: 'rgb(255, 0, 0, .5)'
+            // },
             {
-                label: 'Operating Income',
-                data: incObj.opIncData,
-                fill: false,
-                borderColor: '#ffee00',
-                pointBackgroundColor: '#ffee00',
+                label: 'Revenue',
+                data: incObj.revenueData,
+                fill: true,
+                borderColor: 'rgb(0, 128, 0)',
+                pointBackgroundColor: 'rgb(0, 128, 0)',
                 pointBorderColor: 'rgb(0, 0, 0)',
                 pointBorderWidth: .5,
-                tension: 0.4
+                tension: 0.4,
+                backgroundColor: 'rgb(0, 128, 0)'
             }
-        
         ]
     };
 

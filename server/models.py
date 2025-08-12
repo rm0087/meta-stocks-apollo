@@ -94,6 +94,8 @@ class BalanceSheet(db.Model, SerializerMixin):
         Index('idx_company_cik', 'company_cik'),
     )
 
+    def calculate_liabilities():
+        pass
 
 class IncomeStatement(db.Model, SerializerMixin):
     __tablename__ = "inc_table"
@@ -113,7 +115,11 @@ class IncomeStatement(db.Model, SerializerMixin):
     preferred_dividends = db.Column(db.Integer)
     eps = db.Column(db.Integer)
     operating_income = db.Column(db.Integer)
-
+    cogs = db.Column(db.Integer)
+    operating_expenses = db.Column(db.Integer)
+    income_before_tax = db.Column(db.Integer)
+    total_expenses_net_of_tax = db.Column(db.Integer)
+    
     ifrs_revenue = db.Column(db.Integer)
     accn = db.Column(db.String)
     start = db.Column(db.String)

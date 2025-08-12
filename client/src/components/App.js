@@ -203,7 +203,7 @@ export default function App() {
                 
                 <input id='company-submit-button' className="m-1 border border-black text-sm px-1" type='submit' value="Search"/>
                 <div className="flex flex-row w-full pl-2">
-                    <h1 id = "co-header" className="font-mono font-bold text-xl">{company ? `${company.ticker} - ${company.name} - $${price.c}` : "Search for a company"}</h1>
+                    <h1 id = "co-header" className="font-mono font-bold text-xl">{company ? `${company.ticker} - ${company.name} - $${price.c} - ${company.cik}`: "Search for a company"}</h1>
                     <span className="flex flex-row"></span>
                 </div>
             </form>

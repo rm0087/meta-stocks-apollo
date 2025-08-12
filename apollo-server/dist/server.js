@@ -23,6 +23,9 @@ const typeDefs = `
         net_income: String
         total_revenue: String
         operating_income: String
+        cogs: String
+        operating_expenses: String
+        total_expenses_net_of_tax: String
         end: String
         currency: String
     }
